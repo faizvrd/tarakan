@@ -1,0 +1,1655 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="icon" type="image/png" href="logo1.png">
+<title>ESR Kutai-Arohera</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.0/chart.umd.min.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --navy:   #1F3864; --blue: #2E6DB4; --light: #F0F4F8; --white: #FFFFFF;
+    --green:  #27AE60; --red: #E74C3C; --orange: #E67E22; --yellow: #F39C12;
+    --gray:   #7F8C8D; --border: #DEE2E6; --shadow: 0 2px 8px rgba(0,0,0,.10);
+    --bg-body: #EEF2F7; --bg-card: #FFFFFF; --text-main: #2C3E50; --text-muted: #7F8C8D;
+    --th-bg: #F8F9FA; --row-hover: #FAFBFC; --td-border: #F0F0F0; --sidebar-w: 210px;
+  }
+  body.dark {
+    --bg-body: #121A26; --bg-card: #1B2635; --text-main: #E7ECF3; --text-muted: #9AA9BC;
+    --th-bg: #22304399; --row-hover: #223043; --td-border: #2A3B50; --border: #2A3B50;
+    --navy: #10192A; --shadow: 0 2px 10px rgba(0,0,0,.45);
+  }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--bg-body); color: var(--text-main); font-size: 13px; transition: background .2s, color .2s; }
+
+  .topbar { background: var(--navy); color: #fff; display: flex; align-items: center; justify-content: space-between; padding: 0 20px; height: 56px; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 6px rgba(0,0,0,.3); }
+  .topbar-left { display: flex; align-items: center; gap: 12px; }
+  .hamburger { cursor: pointer; font-size: 18px; background: rgba(255,255,255,.1); border: none; color: #fff; border-radius: 6px; width: 30px; height: 30px; }
+  .topbar-logo { font-size: 22px; }
+  .topbar-title h1 { font-size: 15px; font-weight: 700; letter-spacing: .5px; }
+  .topbar-title p  { font-size: 11px; opacity: .75; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; font-size: 12px; }
+  .btn-refresh { background: rgba(255,255,255,.15); border: 1px solid rgba(255,255,255,.3); color: #fff; padding: 5px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+  .btn-refresh:hover { background: rgba(255,255,255,.25); }
+  .sync-note { font-size: 10px; opacity: .65; }
+  .icon-btn { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.25); color: #fff; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 13px; }
+  .conn-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 5px; background: var(--gray); }
+  .conn-dot.ok { background: var(--green); } .conn-dot.bad { background: var(--red); }
+
+  .user-menu-wrap { position: relative; }
+  .user-btn { background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.25); color: #fff; padding: 5px 12px; border-radius: 6px; cursor: pointer; font-size: 12px; }
+  .user-dropdown { display: none; position: absolute; right: 0; top: 40px; background: var(--bg-card); color: var(--text-main); width: 230px; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.25); overflow: hidden; z-index: 300; }
+  .user-dropdown.open { display: block; }
+  .user-dropdown .ud-section { padding: 10px 14px; border-bottom: 1px solid var(--border); }
+  .user-dropdown .ud-label { font-size: 10px; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; letter-spacing: .5px; }
+  .role-pill { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 11px; font-weight: 700; }
+  .role-pill.Admin { background: #EAF6EE; color: var(--green); }
+  .role-pill.User  { background: #EBF5FB; color: var(--blue); }
+  .ud-btn { display: block; width: 100%; text-align: left; padding: 8px 14px; background: none; border: none; cursor: pointer; font-size: 12px; color: var(--text-main); }
+  .ud-btn:hover { background: var(--row-hover); }
+  .ud-btn.active-choice { font-weight: 700; color: var(--blue); }
+  .theme-toggle-row { display: flex; gap: 8px; padding: 10px 14px; }
+  .theme-opt { flex: 1; text-align: center; padding: 6px; border-radius: 6px; border: 1px solid var(--border); cursor: pointer; font-size: 11px; }
+  .theme-opt.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+  .layout { display: flex; min-height: calc(100vh - 56px); }
+  .sidebar { width: var(--sidebar-w); background: var(--navy); color: #fff; flex-shrink: 0; padding: 16px 0; transition: width .2s; overflow: hidden; }
+  .sidebar.collapsed { width: 0; padding: 16px 0; }
+  .sidebar-section { padding: 8px 16px 4px; font-size: 10px; opacity: .5; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; }
+  .nav-item { display: flex; align-items: center; gap: 10px; padding: 9px 20px; cursor: pointer; font-size: 13px; border-left: 3px solid transparent; transition: all .15s; white-space: nowrap; justify-content: space-between; }
+  .nav-item .nav-main { display: flex; align-items: center; gap: 10px; }
+  .nav-item:hover  { background: rgba(255,255,255,.08); }
+  .nav-item.active { background: rgba(255,255,255,.12); border-left-color: #4FC3F7; font-weight: 600; }
+  .nav-icon { width: 18px; text-align: center; }
+  .nav-badge { background: var(--red); color: #fff; font-size: 10px; font-weight: 700; padding: 1px 7px; border-radius: 10px; }
+  .nav-badge.zero { display: none; }
+  .nav-item.admin-only { display: none; }
+  body.role-Admin .nav-item.admin-only { display: flex; }
+
+  .project-card { margin: 16px; background: rgba(255,255,255,.08); border-radius: 8px; padding: 12px; font-size: 11px; line-height: 1.7; white-space: nowrap; }
+  .project-card .label { opacity: .6; font-size: 10px; text-transform: uppercase; margin-top: 6px; }
+  .project-card .value { font-weight: 600; }
+
+  .main { flex: 1; padding: 20px; overflow-x: hidden; }
+
+  .setup-banner { background: #FFF3E0; border: 1px solid #F5C089; color: #7A4A00; padding: 12px 16px; border-radius: 8px; margin-bottom: 16px; font-size: 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+  body.dark .setup-banner { background: #3a2c10; color: #f0c479; border-color: #6b501c; }
+
+  .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .kpi-card { background: var(--bg-card); border-radius: 10px; padding: 16px; box-shadow: var(--shadow); display: flex; justify-content: space-between; align-items: flex-start; }
+  .kpi-card .kpi-label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; }
+  .kpi-card .kpi-value { font-size: 26px; font-weight: 700; line-height: 1; margin: 4px 0; }
+  .kpi-card .kpi-split { font-size: 20px; font-weight: 700; line-height: 1; margin: 4px 0; display: flex; gap: 10px; }
+  .kpi-card .kpi-split span small { font-size: 10px; font-weight: 600; display: block; color: var(--text-muted); text-transform: uppercase; }
+  .kpi-card .kpi-sub   { font-size: 11px; color: var(--text-muted); }
+  .kpi-card .kpi-icon  { width: 42px; height: 42px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .kpi-blue   .kpi-value, .kpi-blue .kpi-split { color: var(--blue); }
+  .kpi-red    .kpi-value, .kpi-red .kpi-split  { color: var(--red); }
+  .kpi-orange .kpi-value { color: var(--orange); }
+  .kpi-green  .kpi-value { color: var(--green); }
+  .kpi-purple .kpi-value, .kpi-purple .kpi-split { color: #8E44AD; }
+  .kpi-teal   .kpi-value, .kpi-teal .kpi-split   { color: #1ABC9C; }
+  .icon-blue   { background: #EBF3FF; } .icon-red    { background: #FEF0EE; }
+  .icon-orange { background: #FFF4E5; } .icon-green  { background: #EAFAF1; }
+  .icon-purple { background: #F4ECF7; } .icon-teal   { background: #E8FAF5; }
+  body.dark .icon-blue,body.dark .icon-red,body.dark .icon-orange,body.dark .icon-green,body.dark .icon-purple,body.dark .icon-teal{ filter: brightness(.35) saturate(1.4); }
+  .kpi-select { font-size: 10px; margin-top: 4px; padding: 2px 4px; border-radius: 4px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); }
+
+  /* ===== KPI Cards v2 (top strip style) ===== */
+  .kpi-grid-v2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .kpi-card-v2 { background: var(--bg-card); border-radius: 10px; box-shadow: var(--shadow); padding: 14px 18px 16px; border-top: 4px solid var(--gray); }
+  .kpi-card-v2 .kpi-label-v2 { font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 8px; }
+  .kpi-card-v2 .kpi-value-v2 { font-size: 30px; font-weight: 800; line-height: 1; margin-bottom: 10px; }
+  .kpi-card-v2 .kpi-stats-v2 { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; font-weight: 700; }
+  .kpi-stats-v2 .st-blue   { color: var(--blue); }
+  .kpi-stats-v2 .st-green  { color: var(--green); }
+  .kpi-stats-v2 .st-red    { color: var(--red); }
+  .kpi-stats-v2 .st-orange { color: var(--orange); }
+  .kpi-card-v2.v2-blue   { border-top-color: var(--blue); }   .kpi-card-v2.v2-blue   .kpi-value-v2 { color: var(--blue); }
+  .kpi-card-v2.v2-red    { border-top-color: var(--red); }    .kpi-card-v2.v2-red    .kpi-value-v2 { color: var(--red); }
+  .kpi-card-v2.v2-orange { border-top-color: var(--orange); } .kpi-card-v2.v2-orange .kpi-value-v2 { color: var(--orange); }
+  .kpi-card-v2.v2-green  { border-top-color: var(--green); }  .kpi-card-v2.v2-green  .kpi-value-v2 { color: var(--green); }
+  .kpi-card-v2.v2-teal   { border-top-color: #1ABC9C; }       .kpi-card-v2.v2-teal   .kpi-value-v2 { color: #1ABC9C; }
+  .kpi-card-v2 .kpi-select { margin-bottom: 8px; }
+
+  /* ===== Reports page v2 ===== */
+  .report-section { border-top: 1px solid var(--border); padding-top: 4px; margin-top: 4px; }
+  .report-section:first-child { border-top: none; margin-top: 0; }
+  .report-section-title { font-size: 13px; font-weight: 700; padding: 16px 16px 10px; display: flex; align-items: center; gap: 6px; }
+  .report-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; padding: 0 16px 14px; }
+  .report-tile { background: var(--bg-body); border: 1px solid var(--border); border-radius: 8px; padding: 14px 10px; text-align: center; }
+  .report-tile .rt-val { font-size: 24px; font-weight: 800; line-height: 1; margin-bottom: 6px; color: var(--text-main); }
+  .report-tile .rt-lbl { font-size: 10.5px; color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px; }
+  .rt-blue   { color: var(--blue) !important; }
+  .rt-green  { color: var(--green) !important; }
+  .rt-red    { color: var(--red) !important; }
+  .rt-orange { color: var(--orange) !important; }
+  .rt-purple { color: #8E44AD !important; }
+  .rt-navy   { color: var(--navy) !important; }
+  body.dark .rt-navy { color: #9AB4E0 !important; }
+  .report-charts-2col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; padding: 0 16px 16px; }
+  @media (max-width: 900px) { .report-charts-2col { grid-template-columns: 1fr; } }
+  .report-meta-row { display: flex; gap: 28px; flex-wrap: wrap; font-size: 11px; color: var(--text-muted); margin-bottom: 12px; }
+  .report-meta-row b { color: var(--text-main); display: block; font-size: 10px; text-transform: uppercase; margin-bottom: 3px; }
+
+  .section-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .section-grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .card { background: var(--bg-card); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; }
+  .card-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); font-weight: 700; font-size: 13px; gap: 10px; flex-wrap: wrap; }
+  .card-header .header-actions { display: flex; align-items: center; gap: 8px; }
+  .card-header .view-all { font-size: 11px; color: var(--blue); cursor: pointer; text-decoration: none; font-weight: 400; background: none; border: none; }
+  .card-body { padding: 0; }
+  .scrollable { max-height: 320px; overflow-y: auto; }
+  .scrollable thead th { position: sticky; top: 0; z-index: 2; }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  th { background: var(--th-bg); padding: 8px 12px; text-align: left; font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .4px; white-space: nowrap; border-bottom: 1px solid var(--border); }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--td-border); white-space: nowrap; color: var(--text-main); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--row-hover); }
+
+  .badge { display: inline-block; padding: 2px 9px; border-radius: 12px; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; }
+  .badge-delay      { background: #FDECEC; color: var(--red); }
+  .badge-atrisk     { background: #FFF3E0; color: var(--orange); }
+  .badge-ontime     { background: #E8F8F1; color: var(--green); }
+  .badge-plan       { background: #EBF5FB; color: var(--blue); }
+  .badge-confirmed  { background: #E8F8F1; color: var(--green); }
+  .badge-tentative  { background: #FFF3E0; color: var(--orange); }
+  .badge-scheduled  { background: #E8F8F1; color: var(--green); }
+  .badge-ontheway   { background: #EBF5FB; color: var(--blue); }
+  .badge-booking    { background: #FFF3E0; color: var(--orange); }
+  .badge-open       { background: #FDECEC; color: var(--red); }
+  .badge-closed     { background: #E8F8F1; color: var(--green); }
+  .badge-pending    { background: #F4ECF7; color: #8E44AD; }
+  .badge-complete   { background: #E8F8F1; color: var(--green); }
+  .badge-inprogress { background: #FFF3E0; color: var(--orange); }
+  .badge-ongoing    { background: #FFF3E0; color: var(--orange); }
+
+  .risk-high   { background: #FDECEC; color: var(--red); display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+  .risk-medium { background: #FFF3E0; color: var(--orange); display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+  .risk-low    { background: #E8F8F1; color: var(--green); display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600; }
+
+  .delay-red    { color: var(--red); font-weight: 700; }
+  .delay-orange { color: var(--orange); font-weight: 700; }
+  .delay-green  { color: var(--green); }
+
+  .scurve-wrap { padding: 16px; }
+  .progress-summary { display: flex; gap: 20px; margin-bottom: 12px; }
+  .prog-stat { text-align: center; }
+  .prog-stat .prog-val { font-size: 22px; font-weight: 700; }
+  .prog-stat .prog-lbl { font-size: 11px; color: var(--text-muted); }
+  .prog-actual  .prog-val { color: var(--blue); }
+  .prog-behind  .prog-val { color: var(--red); }
+
+  .warning-list { padding: 8px 0; }
+  .warning-item { display: flex; align-items: flex-start; gap: 10px; padding: 10px 16px; border-bottom: 1px solid var(--td-border); font-size: 12px; }
+  .warning-item:last-child { border-bottom: none; }
+  .w-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .w-msg  { flex: 1; }
+  .w-date { font-size: 11px; font-weight: 600; color: var(--red); white-space: nowrap; }
+
+  .loading-overlay { position: fixed; inset: 0; background: rgba(31,56,100,.85); display: none; flex-direction: column; align-items: center; justify-content: center; z-index: 999; color: #fff; }
+  .loading-overlay.show { display: flex; }
+  .spinner { width: 48px; height: 48px; border: 4px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite; margin-bottom: 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  .toolbar-row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+  .search-box { flex: 1; min-width: 180px; padding: 7px 12px; border-radius: 6px; border: 1px solid var(--border); font-size: 12px; background: var(--bg-card); color: var(--text-main); }
+  .select-box { padding: 7px 10px; border-radius: 6px; border: 1px solid var(--border); font-size: 12px; background: var(--bg-card); color: var(--text-main); }
+  .tab-btn { padding: 6px 14px; border-radius: 6px; border: 1px solid var(--border); background: var(--bg-card); color: var(--text-main); font-size: 12px; cursor: pointer; }
+  .tab-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+  .link-icon { color: var(--blue); text-decoration: none; font-weight: 600; }
+  .link-icon:hover { text-decoration: underline; }
+  .row-actions { display: flex; gap: 6px; }
+  .btn-mini { padding: 3px 9px; font-size: 11px; border-radius: 5px; border: none; cursor: pointer; font-weight: 600; }
+  .btn-mini.edit { background: #EBF5FB; color: var(--blue); }
+  .btn-mini.del  { background: #FDECEC; color: var(--red); }
+  .admin-only-inline { display: none; }
+  body.role-Admin .admin-only-inline { display: inline-flex; }
+  body.role-Admin .admin-only-block { display: block; }
+  body.role-User .admin-only-inline, body.role-User .admin-only-block { display: none !important; }
+
+  @media (max-width: 1200px) { .kpi-grid, .kpi-grid-v2 { grid-template-columns: repeat(3, 1fr); } .section-grid-3 { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 768px) {
+    .kpi-grid, .kpi-grid-v2 { grid-template-columns: repeat(2, 1fr); }
+    .section-grid, .section-grid-3 { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 480px) {
+    .kpi-grid, .kpi-grid-v2 { grid-template-columns: 1fr; }
+    :root { --sidebar-w: 180px; }
+  }
+
+  .modal-bg { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 200; align-items: center; justify-content: center; }
+  .modal-bg.open { display: flex; }
+  .modal { background: var(--bg-card); border-radius: 12px; width: 90%; max-width: 560px; box-shadow: 0 8px 32px rgba(0,0,0,.2); overflow: hidden; }
+  .modal-header { background: var(--navy); color: #fff; padding: 14px 20px; display: flex; justify-content: space-between; align-items: center; font-weight: 700; }
+  .modal-close { cursor: pointer; font-size: 18px; background: none; border: none; color: #fff; }
+  .modal-body  { padding: 20px; max-height: 70vh; overflow-y: auto; }
+  .form-group  { margin-bottom: 14px; }
+  .form-label  { display: block; font-size: 12px; font-weight: 600; margin-bottom: 4px; color: var(--text-main); }
+  .form-control { width: 100%; padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 13px; outline: none; transition: border .2s; background: var(--bg-card); color: var(--text-main); }
+  .form-control:focus { border-color: var(--blue); }
+  .btn-primary { background: var(--blue); color: #fff; border: none; padding: 9px 22px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 13px; transition: background .2s; }
+  .btn-primary:hover { background: #1a5a9a; }
+  .btn-secondary { background: var(--th-bg); color: var(--text-main); border: 1px solid var(--border); padding: 9px 18px; border-radius: 6px; cursor: pointer; font-size: 13px; margin-right: 8px; }
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--green); color: #fff; padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 13px; box-shadow: 0 4px 16px rgba(0,0,0,.2); transform: translateY(80px); opacity: 0; transition: all .3s; z-index: 999; }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.error { background: var(--red); }
+
+  .report-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(260px,1fr)); gap: 16px; padding: 16px; }
+  .report-box { background: var(--bg-card); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+  .report-box h4 { font-size: 12px; margin-bottom: 8px; color: var(--text-muted); text-transform: uppercase; }
+  @media print {
+    .topbar, .sidebar, .no-print { display: none !important; }
+    .main { padding: 0; }
+    body { background: #fff; color: #000; }
+  }
+
+  /* ===== LOGIN SCREEN ===== */
+  .login-page {
+    position: fixed; inset: 0; z-index: 500; display: flex; align-items: center; justify-content: center;
+    background-image: linear-gradient(135deg, rgba(15,26,45,.78), rgba(15,26,45,.55) 45%, rgba(15,26,45,.85)), url('samator.jpg');
+    background-size: cover; background-position: center; padding: 20px;
+  }
+  .login-card {
+    width: 100%; max-width: 400px; background: rgba(255,255,255,.97); border-radius: 16px; padding: 32px 30px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.45); backdrop-filter: blur(4px);
+  }
+  body.dark .login-card { background: rgba(27,38,53,.97); }
+  .login-logo { text-align: center; font-size: 40px; margin-bottom: 6px; }
+  .login-card h2 { text-align: center; font-size: 18px; font-weight: 800; color: var(--grey); letter-spacing: .3px; }
+  .login-card .login-sub { text-align: center; font-size: 12px; color: var(--text-muted); margin-bottom: 22px; }
+  .login-field { margin-bottom: 16px; }
+  .login-field label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 6px; color: var(--text-main); }
+  .login-field input { width: 100%; padding: 11px 14px; border-radius: 8px; border: 1px solid var(--border); font-size: 14px; background: var(--bg-card); color: var(--text-main); }
+  .login-field input:focus { outline: none; border-color: var(--blue); }
+  /* Icon */
+.info-icon{
+    position:relative;
+    display:inline-flex;
+    justify-content:center;
+    align-items:center;
+    width:20px;
+    height:20px;
+    /**/border:1px solid #999;
+    /**/border-radius:50%;
+    font-size:12px;
+    cursor:pointer;
+    color:#666;
+    background:#fff;
+}
+
+/* Tooltip */
+.tooltip-box{
+    position:absolute;
+    top:-10px;
+    left:30px;
+
+    width:250px;
+
+    background:#fff;
+    color:#333;
+
+    padding:15px;
+    border-radius:12px;
+
+    box-shadow:0 10px 30px rgba(0,0,0,.18);
+
+    font-size:13px;
+    line-height:1.6;
+
+    opacity:0;
+    visibility:hidden;
+
+    transition:.25s;
+    z-index:999;
+}
+
+/* Segitiga */
+.tooltip-box::after{
+    content:"";
+    position:absolute;
+
+    left:-8px;
+    top:20px;
+
+    border-width:8px;
+    border-style:solid;
+    border-color:transparent #fff transparent transparent;
+}
+
+/* Hover */
+.info-icon:hover .tooltip-box{
+    opacity:1;
+    visibility:visible;
+}
+  .role-choice { display: flex; gap: 10px; }
+  .role-choice-btn {
+    flex: 1; padding: 12px 8px; border-radius: 10px; border: 2px solid var(--border); background: var(--bg-card);
+    cursor: pointer; text-align: center; font-size: 12px; font-weight: 700; color: var(--text-main); transition: all .15s;
+  }
+  .role-choice-btn .rc-icon { font-size: 20px; display: block; margin-bottom: 4px; }
+  .role-choice-btn.selected { border-color: var(--blue); background: #EBF5FB; color: var(--blue); }
+  body.dark .role-choice-btn.selected { background: #16324a; }
+  .login-error { color: var(--red); font-size: 12px; margin-bottom: 10px; min-height: 14px; text-align: center; }
+  .login-btn { width: 100%; background: var(--navy); color: #fff; border: none; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; margin-top: 4px; }
+  .login-btn:hover { background: #16243f; }
+  .login-footer { text-align: center; font-size: 10px; color: var(--text-muted); margin-top: 18px; }
+</style>
+</head>
+<body class="role-Admin">
+
+<!-- ======================== LOGIN SCREEN ======================== -->
+<div class="login-page" id="loginScreen">
+  <div class="login-card">
+    <h2>EXPEDITING DASHBOARD</h2>
+    <div class="login-sub">Kutai Project · Samator Group</div>
+    <div class="login-field">
+      <label>Username
+       <span class="info-icon">i <!--<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M480-80q-139-35-229.5-159.5T160-516v-244l320-120 320 120v244q0 152-90.5 276.5T480-80Zm0-84q104-33 172-132t68-220v-189l-240-90-240 90v189q0 121 68 220t172 132Zm0-316Zm29.5 187.5Q522-305 522-322t-12.5-29.5Q497-364 480-364t-29.5 12.5Q438-339 438-322t12.5 29.5Q463-280 480-280t29.5-12.5ZM451-408h60v-22q0-11 5-21 6-14 16-23.5t21-19.5q17-17 29.5-38t12.5-46q0-45-34.5-73.5T480-680q-40 0-71.5 23T366-596l54 22q6-20 22.5-34t37.5-14q22 0 38.5 13t16.5 33q0 17-10.5 31.5T501-518q-12 11-24 22.5T458-469q-7 14-7 29.5v31.5Z"/></svg>-->
+              <span class="tooltip-box">
+                <strong>Username Hint!</strong><br><br>
+                "User"
+              </span>
+       </span>
+      </label>
+      <input id="loginUsername" type="text" autocomplete="username" placeholder="Masukkan username" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-field">
+      <label>Password
+       <span class="info-icon">i<!--<svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M480-80q-139-35-229.5-159.5T160-516v-244l320-120 320 120v244q0 152-90.5 276.5T480-80Zm0-84q104-33 172-132t68-220v-189l-240-90-240 90v189q0 121 68 220t172 132Zm0-316Zm29.5 187.5Q522-305 522-322t-12.5-29.5Q497-364 480-364t-29.5 12.5Q438-339 438-322t12.5 29.5Q463-280 480-280t29.5-12.5ZM451-408h60v-22q0-11 5-21 6-14 16-23.5t21-19.5q17-17 29.5-38t12.5-46q0-45-34.5-73.5T480-680q-40 0-71.5 23T366-596l54 22q6-20 22.5-34t37.5-14q22 0 38.5 13t16.5 33q0 17-10.5 31.5T501-518q-12 11-24 22.5T458-469q-7 14-7 29.5v31.5Z"/></svg>-->
+              <span class="tooltip-box">
+                <strong>Password Hint!</strong><br><br>
+                "user"
+              </span>
+       </span>
+      </label>
+      <input id="loginPassword" type="password" autocomplete="current-password" placeholder="Masukkan password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-error" id="loginError"></div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">Masuk Dashboard →</button>
+    <div class="login-footer">© 2026 Expeditor · PT Arohera</div>
+  </div>
+</div>
+
+<div id="appRoot" style="display:none">
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div>Sabar</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- TOP BAR -->
+<div class="topbar no-print">
+  <div class="topbar-left">
+    <button class="hamburger" onclick="toggleSidebar()">☰</button>
+    <div class="topbar-title">
+      <h1>EXPEDITING DASHBOARD</h1>
+      <p id="projectSubtitle">KUTAI PROJECT</p>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span id="currentDate"></span>
+    <span id="connDot" style="display:none"></span>
+    <div>
+      <button class="btn-refresh" onclick="refreshData()">🔄 Refresh</button>
+    </div>
+    <div class="user-menu-wrap">
+      <button class="user-btn" onclick="toggleUserMenu()">👤 <span id="topUserName">Expeditor</span> · <span id="roleLabelTop">Admin</span> ▾</button>
+      <div class="user-dropdown" id="userDropdown">
+        <div class="ud-section">
+          <div class="ud-label">Login Sebagai</div>
+          <span class="role-pill" id="rolePill">Admin</span>
+        </div>
+        <div class="ud-section">
+          <div class="ud-label">Tampilan</div>
+          <div class="theme-toggle-row">
+            <div class="theme-opt" id="themeLightBtn" onclick="setTheme('light')">☀️ Light</div>
+            <div class="theme-opt" id="themeDarkBtn" onclick="setTheme('dark')">🌙 Dark</div>
+          </div>
+        </div>
+        <button class="ud-btn" style="border-bottom:none;color:var(--red);font-weight:700" onclick="logout()">🚪 Logout</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-section">Navigation</div>
+    <div class="nav-item active" onclick="showPage('dashboard', this)"><span class="nav-main"><span class="nav-icon">📊</span> Dashboard</span></div>
+    <div class="nav-item" onclick="showPage('po', this)"><span class="nav-main"><span class="nav-icon">📋</span> PO Tracking</span><span class="nav-badge" id="badgePO">0</span></div>
+    <div class="nav-item" onclick="showPage('milestone', this)"><span class="nav-main"><span class="nav-icon">🎯</span> Milestone Tracking</span></div>
+    <div class="nav-item" onclick="showPage('vendor', this)"><span class="nav-main"><span class="nav-icon">🏭</span> Vendor Progress</span></div>
+    <div class="nav-item" onclick="showPage('fat', this)"><span class="nav-main"><span class="nav-icon">🔬</span> FAT & Inspection</span><span class="nav-badge" id="badgeFAT">0</span></div>
+    <div class="nav-item" onclick="showPage('shipment', this)"><span class="nav-main"><span class="nav-icon">🚢</span> Shipment Tracking</span></div>
+    <div class="nav-item" onclick="showPage('actions', this)"><span class="nav-main"><span class="nav-icon">⚡</span> Action Log</span><span class="nav-badge" id="badgeActions">0</span></div>
+    <div class="nav-item admin-only" onclick="showPage('master', this)"><span class="nav-main"><span class="nav-icon">🗂️</span> Master Data</span></div>
+    <div class="nav-item admin-only" onclick="showPage('users', this)"><span class="nav-main"><span class="nav-icon">👥</span> User Management</span></div>
+    <div class="nav-item" onclick="showPage('reports', this)"><span class="nav-main"><span class="nav-icon">📄</span> Reports</span></div>
+    <div id="projectCard" class="project-card">
+      <div class="label">Project</div><div class="value" id="sideProjectName">Repair & Install Acetylene Plant</div>
+      <div class="label">Client</div><div class="value" id="sideClient">Samator Group</div>
+      <div class="label">Location</div><div class="value" id="sideLocation">Kutai, Indonesia</div>
+      <div class="label">Project Start</div><div class="value" id="sideStart">9 Apr 2026</div>
+      <div class="label">Target Commissioning</div><div class="value" id="sideTarget">30 Sep 2026</div>
+    </div>
+  </nav>
+
+  <main class="main">
+
+    <div id="page-dashboard" class="page active">
+      <div class="setup-banner" id="setupBanner" style="display:none">
+        <span>⚠️ Hubungi Admin</span>
+      </div>
+
+      <div class="kpi-grid-v2">
+        <div class="kpi-card-v2 v2-blue">
+          <div class="kpi-label-v2">Total PO</div>
+          <div class="kpi-value-v2" id="kpiPOTotal">—</div>
+          <div class="kpi-stats-v2">
+            <span class="st-blue">Plan: <span id="kpiPOPlan">—</span></span>
+            <span class="st-green">Actual: <span id="kpiPOActual">—</span></span>
+          </div>
+        </div>
+        <div class="kpi-card-v2 v2-red">
+          <div class="kpi-label-v2">Critical Items</div>
+          <div class="kpi-value-v2" id="kpiCritTotal">—</div>
+          <div class="kpi-stats-v2">
+            <span class="st-blue">Delay: <span id="kpiCritDelay">—</span></span>
+            <span class="st-green">At Risk: <span id="kpiCritAtRisk">—</span></span>
+          </div>
+        </div>
+        <div class="kpi-card-v2 v2-orange">
+          <div class="kpi-label-v2">Overdue Items</div>
+          <div class="kpi-value-v2" id="kpiOverdue">—</div>
+          <div class="kpi-stats-v2"><span class="st-orange">Delay aktif</span></div>
+        </div>
+        <div class="kpi-card-v2 v2-green">
+          <div class="kpi-label-v2">Open Actions</div>
+          <div class="kpi-value-v2" id="kpiActionsTotal">—</div>
+          <div class="kpi-stats-v2">
+            <span class="st-red">Open: <span id="kpiOpenAct">—</span></span>
+            <span class="st-green">Closed: <span id="kpiCloseAct">—</span></span>
+          </div>
+        </div>
+        <div class="kpi-card-v2 v2-teal">
+          <div class="kpi-label-v2">FAT Schedule</div>
+          <div class="kpi-value-v2" id="kpiFAT">—</div>
+          <select class="kpi-select" id="upcomingDaysSelect" onchange="loadDashboard()">
+            <option value="120">120 Hari</option><option value="90">90 Hari</option><option value="60">60 Hari</option><option value="30" selected>30 Hari</option>
+          </select>
+          <div class="kpi-stats-v2">
+            <span class="st-blue">Plan: <span id="kpiFATPlan">—</span></span>
+            <span class="st-green">Confirmed: <span id="kpiFATConfirmed">—</span></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-grid-3">
+        <div class="card">
+          <div class="card-header"><span>⚠️ Critical Item Status</span><button class="view-all" onclick="navTo('po')">View all →</button></div>
+          <div class="card-body table-wrap scrollable">
+            <table><thead><tr><th>Item</th><th>Vendor</th><th>RDD</th><th>Delay</th><th>Status</th></tr></thead>
+              <tbody id="criticalTable"><tr><td colspan="5" style="text-align:center;padding:20px;color:#999">Belum ada data</td></tr></tbody></table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header">📈 Project Overview (S-Curve)</div>
+          <div class="card-body scurve-wrap">
+            <div class="progress-summary">
+              <div class="prog-stat prog-actual"><div class="prog-val" id="progActual">—</div><div class="prog-lbl">Overall Progress (Actual)</div></div>
+              <div class="prog-stat prog-behind"><div class="prog-val" id="progVariance">—</div><div class="prog-lbl">Behind Schedule</div></div>
+            </div>
+            <div style="position: relative; height: 320px;">
+              <canvas id="sCurveChart"></canvas>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span>🎯 Risk Heatmap (By Vendor)</span><button class="view-all" onclick="navTo('vendor')">View all →</button></div>
+          <div class="card-body table-wrap scrollable">
+            <table><thead><tr><th>Vendor</th><th>Schedule</th><th>Quality</th><th>Overall</th></tr></thead>
+              <tbody id="riskTable"><tr><td colspan="4" style="text-align:center;padding:20px;color:#999">Belum ada data</td></tr></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-grid-3">
+        <div class="card">
+          <div class="card-header"><span>🚨 Early Warning</span><button class="view-all" onclick="navTo('actions')">View all warnings →</button></div>
+          <div class="warning-list scrollable" id="warningList"><div style="padding:20px;text-align:center;color:#999">Belum ada data</div></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span>🔬 Upcoming FAT Schedule</span><button class="view-all" onclick="navTo('fat')">View all FAT →</button></div>
+          <div class="card-body table-wrap scrollable">
+            <table><thead><tr><th>Item</th><th>Vendor</th><th>FAT Date</th><th>Location</th><th>Status</th></tr></thead>
+              <tbody id="fatTable"><tr><td colspan="5" style="text-align:center;padding:20px;color:#999">Belum ada data</td></tr></tbody></table>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span>✅ Recent Actions (Open)</span><button class="view-all" onclick="navTo('actions')">View all actions →</button></div>
+          <div class="card-body table-wrap scrollable">
+            <table><thead><tr><th>Date</th><th>Item</th><th>Issue</th><th>PIC</th><th>Due</th></tr></thead>
+              <tbody id="actionTable"><tr><td colspan="5" style="text-align:center;padding:20px;color:#999">Belum ada data</td></tr></tbody></table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header"><span>🚢 Shipment Tracking</span><button class="view-all" onclick="navTo('shipment')">View all shipments →</button></div>
+        <div class="card-body table-wrap scrollable">
+          <table><thead><tr><th>Item</th><th>Vessel/Mode</th><th>ETD</th><th>ETA</th><th>POL</th><th>POD</th><th>Current Location</th><th>Status</th></tr></thead>
+            <tbody id="shipmentTable"><tr><td colspan="8" style="text-align:center;padding:20px;color:#999">Belum ada data</td></tr></tbody></table>
+        </div>
+      </div>
+    </div><!-- end dashboard page -->
+
+    <div id="page-po" class="page">
+      <div class="card">
+        <div class="card-header">
+          <span>📋 PO Tracking - All Items</span>
+          <div class="header-actions">
+            <button class="tab-btn active" id="poTabAll" onclick="setPOTab('All')">Semua</button>
+            <button class="tab-btn" id="poTabPlan" onclick="setPOTab('Plan')">Plan PO</button>
+            <button class="tab-btn" id="poTabActual" onclick="setPOTab('Actual')">Actual PO</button>
+            <button class="btn-primary admin-only-inline" onclick="openAddModal('PO_Tracking')">+ Tambah PO</button>
+          </div>
+        </div>
+        <div class="toolbar-row">
+          <input class="search-box" id="poSearch" placeholder="Cari PO ID / Item / Vendor..." oninput="renderPODetail()">
+          <select class="select-box" id="poCurrency" onchange="renderPODetail()">
+            <option value="IDR" selected>IDR</option><option value="USD">USD</option><option value="JPY">JPY</option>
+          </select>
+        </div>
+        <div class="card-body table-wrap scrollable" style="max-height:520px">
+          <table>
+            <thead><tr>
+              <th>PO ID</th><th>Type</th><th>Package</th><th>Item</th><th>Vendor</th><th>PO Date</th>
+              <th>RDD</th><th>FDD</th><th>Status</th><th>Delay (Days)</th><th>Value</th><th>Unpriced PO</th><th>Notes</th><th class="admin-only-inline">Aksi</th>
+            </tr></thead>
+            <tbody id="poTable"><tr><td colspan="14" style="text-align:center;padding:30px;color:#999">Belum ada data</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-milestone" class="page">
+      <div class="card">
+        <div class="card-header"><span>🎯 Milestone Tracking</span><button class="btn-primary admin-only-inline" onclick="openAddModal('Milestone_Tracking')">+ Tambah Milestone</button></div>
+        <div class="card-body table-wrap scrollable" style="max-height:560px">
+          <table><thead><tr><th>ID</th><th>PO ID</th><th>Vendor</th><th>Milestone</th><th>Planned Date</th><th>Actual Date</th><th>Status</th><th>Completion %</th><th class="admin-only-inline">Aksi</th></tr></thead>
+            <tbody id="milestoneTable"><tr><td colspan="9" style="text-align:center;padding:30px;color:#999">Belum ada data</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-vendor" class="page">
+      <div class="card">
+        <div class="card-header"><span>🏭 Vendor Progress & Overall Risk</span></div>
+        <div class="card-body table-wrap scrollable" style="max-height:560px">
+          <table><thead><tr><th>Vendor</th><th>Category</th><th>Schedule Risk</th><th>Quality Risk</th><th>Overall Risk</th><th>Description</th><th>Mitigation</th></tr></thead>
+            <tbody id="vendorTable"><tr><td colspan="7" style="text-align:center;padding:30px;color:#999">Belum ada data</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-fat" class="page">
+      <div class="card">
+        <div class="card-header"><span>🔬 FAT & Inspection Schedule</span><button class="btn-primary admin-only-inline" onclick="openAddModal('FAT_Schedule')">+ Tambah FAT</button></div>
+        <div class="card-body table-wrap scrollable" style="max-height:560px">
+          <table><thead><tr><th>FAT ID</th><th>Item</th><th>Vendor</th><th>FAT Date</th><th>Location</th><th>Status</th><th>Inspector</th><th>FAT Report</th><th>Realtime Photo</th><th>Notes</th><th class="admin-only-inline">Aksi</th></tr></thead>
+            <tbody id="fatDetailTable"><tr><td colspan="11" style="text-align:center;padding:30px;color:#999">Belum ada data</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-shipment" class="page">
+      <div class="card">
+        <div class="card-header"><span>🚢 Shipment Tracking</span><button class="btn-primary admin-only-inline" onclick="openAddModal('Shipment_Tracking')">+ Tambah Shipment</button></div>
+        <div class="card-body table-wrap scrollable" style="max-height:560px">
+          <table><thead><tr><th>ID</th><th>Item</th><th>Vessel/Mode</th><th>ETD</th><th>ETA</th><th>POL</th><th>POD</th><th>Current Location</th><th>Status</th><th>Marine Tracking</th><th>WhatsApp</th><th>Notes</th><th class="admin-only-inline">Aksi</th></tr></thead>
+            <tbody id="shipmentDetailTable"><tr><td colspan="13" style="text-align:center;padding:30px;color:#999">Belum ada data</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-actions" class="page">
+      <div class="card">
+        <div class="card-header"><span>⚡ Action Log</span><button class="btn-primary admin-only-inline" onclick="openAddModal('Action_Log')">+ Tambah Action</button></div>
+        <div class="card-body table-wrap scrollable" style="max-height:560px">
+          <table><thead><tr><th>ID</th><th>Date</th><th>Item</th><th>Issue / Action Required</th><th>PIC Vendor</th><th>Due Date</th><th>Status</th><th>Closed Date</th><th>Aksi</th></tr></thead>
+            <tbody id="actionDetailTable"><tr><td colspan="9" style="text-align:center;padding:30px;color:#999">Belum ada data</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-master" class="page">
+      <div class="card">
+        <div class="card-header"><span>🗂️ Master Data</span><button class="btn-primary admin-only-inline" onclick="openAddModal('Master_Data')">+ Tambah Master Data</button></div>
+        <div class="card-body table-wrap scrollable" style="max-height:560px">
+          <table><thead><tr><th>Type</th><th>Key</th><th>Value</th><th>Notes</th><th class="admin-only-inline">Aksi</th></tr></thead>
+            <tbody id="masterTable"><tr><td colspan="5" style="text-align:center;padding:30px;color:#999">Belum ada data</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-users" class="page">
+      <div class="card">
+        <div class="card-header"><span>👥 User Management</span><button class="btn-primary admin-only-inline" onclick="openAddModal('User_Management')">+ Tambah User</button></div>
+        <div class="card-body table-wrap scrollable" style="max-height:560px">
+          <table><thead><tr><th>User ID</th><th>Name</th><th>Email</th><th>Role</th><th>Status</th><th class="admin-only-inline">Aksi</th></tr></thead>
+            <tbody id="userTable"><tr><td colspan="6" style="text-align:center;padding:30px;color:#999">Belum ada data</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <div id="page-reports" class="page">
+      <div class="card">
+        <div class="card-header no-print">
+          <span>📄 Reports & Export</span>
+          <div class="header-actions">
+            <!--<button class="btn-secondary" onclick="exportReportPDF()">📕 Export PDF</button>-->
+            <!--<button class="btn-secondary" onclick="exportReportCSV('excel')">📗 Export Excel</button>-->
+            <!--<button class="btn-secondary" onclick="exportReportCSV('csv')">📘 Export CSV</button>-->
+            <button class="btn-primary" onclick="printReport()">🖨️ Print</button>
+          </div>
+        </div>
+        <div id="reportContent">
+          <div style="padding:16px 16px 0;font-weight:700;font-size:15px" id="reportTitle">Reports & Export</div>
+          <div style="padding:0 16px 12px;color:var(--text-muted);font-size:12px" id="reportDate">Laporan Visual Diagram</div>
+
+          <!-- SECTION 1: TOTAL PO SUMMARY -->
+          <div class="report-section">
+            <div class="report-section-title">📋 Total PO Summary</div>
+            <div class="report-tiles">
+              <div class="report-tile"><div class="rt-val rt-navy" id="rTotalPO">—</div><div class="rt-lbl">Total PO</div></div>
+              <div class="report-tile"><div class="rt-val rt-green" id="rActualPO">—</div><div class="rt-lbl">Actual PO</div></div>
+              <div class="report-tile"><div class="rt-val rt-blue" id="rPlanPO">—</div><div class="rt-lbl">Plan PO</div></div>
+              <div class="report-tile"><div class="rt-val rt-red" id="rDelayAtRiskPO">—</div><div class="rt-lbl">Delay / At Risk</div></div>
+            </div>
+            <div class="report-charts-2col">
+              <div class="report-box"><h4>PO by Status</h4><canvas id="chartPOStatus" height="180"></canvas></div>
+              <div class="report-box"><h4>PO by Package</h4><canvas id="chartPOPackage" height="180"></canvas></div>
+            </div>
+          </div>
+
+          <!-- SECTION 2: CRITICAL ITEMS REPORT -->
+          <div class="report-section">
+            <div class="report-section-title">⚠️ Critical Items Report</div>
+            <div class="report-tiles">
+              <div class="report-tile"><div class="rt-val rt-red" id="rCritDelay">—</div><div class="rt-lbl">Delay</div></div>
+              <div class="report-tile"><div class="rt-val rt-orange" id="rCritAtRisk">—</div><div class="rt-lbl">At Risk</div></div>
+              <div class="report-tile"><div class="rt-val rt-red" id="rCritMaxDelay">—</div><div class="rt-lbl">Max Delay (Days)</div></div>
+              <div class="report-tile"><div class="rt-val rt-orange" id="rCritAvgDelay">—</div><div class="rt-lbl">Avg Delay (Days)</div></div>
+            </div>
+            <div class="report-box" style="margin:0 16px 16px"><h4>Delay by Critical Item</h4><canvas id="chartCriticalItems" height="130"></canvas></div>
+          </div>
+
+          <!-- SECTION 3: OVERDUE ITEMS REPORT -->
+          <div class="report-section">
+            <div class="report-section-title">📅 Overdue Items Report</div>
+            <div class="report-tiles">
+              <div class="report-tile"><div class="rt-val rt-red" id="rOverduePO">—</div><div class="rt-lbl">Overdue PO</div></div>
+              <div class="report-tile"><div class="rt-val rt-green" id="rOnTimePO">—</div><div class="rt-lbl">On Time</div></div>
+              <div class="report-tile"><div class="rt-val rt-blue" id="rOTDRate">—</div><div class="rt-lbl">OTD Rate</div></div>
+              <div class="report-tile"><div class="rt-val rt-blue" id="rPlanFuture">—</div><div class="rt-lbl">Plan (Future)</div></div>
+            </div>
+            <div class="report-charts-2col">
+              <div class="report-box"><h4>OTD Donut</h4><canvas id="chartOTDDonut" height="180"></canvas></div>
+              <div class="report-box"><h4>Delay per Vendor</h4><canvas id="chartDelayVendor" height="180"></canvas></div>
+            </div>
+          </div>
+
+          <!-- SECTION 4: OPEN ACTIONS REPORT -->
+          <div class="report-section">
+            <div class="report-section-title">⚡ Open Actions Report</div>
+            <div class="report-tiles">
+              <div class="report-tile"><div class="rt-val rt-red" id="rActOpen">—</div><div class="rt-lbl">Open</div></div>
+              <div class="report-tile"><div class="rt-val rt-purple" id="rActPending">—</div><div class="rt-lbl">Pending</div></div>
+              <div class="report-tile"><div class="rt-val rt-green" id="rActClosed">—</div><div class="rt-lbl">Closed</div></div>
+              <div class="report-tile"><div class="rt-val rt-navy" id="rActTotal">—</div><div class="rt-lbl">Total Actions</div></div>
+            </div>
+            <div class="report-box" style="margin:0 16px 16px"><h4>Actions Status</h4><canvas id="chartActionsStatus" height="140"></canvas></div>
+          </div>
+
+          <!-- SECTION 5: UPCOMING FAT REPORT -->
+          <div class="report-section">
+            <div class="report-section-title">🔬 Upcoming FAT Report</div>
+            <div class="report-tiles">
+              <div class="report-tile"><div class="rt-val rt-green" id="rFatConfirmed">—</div><div class="rt-lbl">Confirmed</div></div>
+              <div class="report-tile"><div class="rt-val rt-orange" id="rFatTentative">—</div><div class="rt-lbl">Tentative</div></div>
+              <div class="report-tile"><div class="rt-val rt-blue" id="rFatPlan">—</div><div class="rt-lbl">Plan</div></div>
+              <div class="report-tile"><div class="rt-val rt-purple" id="rFatOngoing">—</div><div class="rt-lbl">Ongoing</div></div>
+            </div>
+            <div class="report-charts-2col">
+              <div class="report-box"><h4>FAT by Status</h4><canvas id="chartFATStatus" height="180"></canvas></div>
+              <div class="report-box"><h4>FAT Timeline</h4><canvas id="chartFATTimeline" height="180"></canvas></div>
+            </div>
+            <div class="report-box" style="margin:0 16px 16px">
+              <h4>Detail FAT Schedule</h4>
+              <div class="table-wrap">
+                <table><thead><tr><th>Item</th><th>Vendor</th><th>FAT Date</th><th>Location</th><th>Status</th><th>Inspector</th></tr></thead>
+                  <tbody id="reportFatTable"><tr><td colspan="6" style="text-align:center;padding:16px;color:#999">Memuat...</td></tr></tbody></table>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION 6: S-CURVE PROGRESS REPORT -->
+          <div class="report-section">
+            <div class="report-section-title">📈 S-Curve Progress Report</div>
+            <div class="report-tiles">
+              <div class="report-tile"><div class="rt-val rt-blue" id="rSCurveActual">—</div><div class="rt-lbl" id="rSCurveActualLbl">Actual</div></div>
+              <div class="report-tile"><div class="rt-val rt-navy" id="rSCurvePlanned">—</div><div class="rt-lbl" id="rSCurvePlannedLbl">Planned</div></div>
+              <div class="report-tile"><div class="rt-val" id="rSCurveVariance">—</div><div class="rt-lbl">Variance</div></div>
+              <div class="report-tile"><div class="rt-val rt-blue" id="rSCurveTarget">—</div><div class="rt-lbl" id="rSCurveTargetLbl">Target</div></div>
+            </div>
+            <div class="report-box" style="margin:0 16px 16px">
+              <div class="report-meta-row">
+                <div><b>Project</b><span id="rProjName">—</span></div>
+                <div><b>Client</b><span id="rProjClient">—</span></div>
+                <div><b>Location</b><span id="rProjLocation">—</span></div>
+                <div><b>Start / Target</b><span id="rProjDates">—</span></div>
+              </div>
+              <canvas id="chartSCurveReport" height="220"></canvas>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- ADD/EDIT MODAL -->
+<div class="modal-bg" id="addModal">
+  <div class="modal">
+    <div class="modal-header"><span id="modalTitle">Tambah Data</span><button class="modal-close" onclick="closeModal()">✕</button></div>
+    <div class="modal-body" id="modalBody"></div>
+    <div style="padding:16px 20px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px">
+      <button class="btn-secondary" onclick="closeModal()">Batal</button>
+      <button class="btn-primary" onclick="submitModal()">💾 Simpan</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- end #appRoot -->
+
+<script>
+const API_BASE_URL = "https://script.google.com/macros/s/AKfycbyEOFw3Mp4CoqIRB7YlCWnBXgPtSyg4Tvadvhf-nHsJKoaOM_iMebLqT9npxBxyEYZi/exec";
+
+function apiCall(action, params, method) {
+  method = method || "GET";
+  if (!API_BASE_URL || API_BASE_URL === "PASTE_URL_WEB_APP_DI_SINI") {
+    showToast("Dashboard belum dihubungkan ke Google Sheets. Hubungi Admin untuk melengkapi API_BASE_URL di kode.", true);
+    return Promise.reject(new Error("API URL belum diatur"));
+  }
+  if (method === "GET") {
+    const qs = new URLSearchParams(Object.assign({ action: action }, params || {})).toString();
+    return fetch(API_BASE_URL + "?" + qs).then(r => r.json());
+  }
+  return fetch(API_BASE_URL, { method: "POST", body: JSON.stringify({ action: action, payload: params || {} }) })
+    .then(r => r.json());
+}
+
+let dashData = null;
+let sCurveChart = null;
+let currentPage = "dashboard";
+let currentSheet = "";
+let editKeyValue = null;
+let poRawData = [];
+let poTabFilter = "All";
+let currencyRates = { USD: 1, IDR: 16300, JPY: 157 };
+let autoRefreshTimer = null;
+
+const KEY_COLUMNS = {
+  "PO_Tracking": "PO_ID", "Milestone_Tracking": "Milestone_ID", "FAT_Schedule": "FAT_ID",
+  "Shipment_Tracking": "Shipment_ID", "Action_Log": "Action_ID", "Risk_Register": "Risk_ID",
+  "User_Management": "User_ID", "Master_Data": "Key"
+};
+
+const MILESTONE_OPTIONS = [
+  "PO Issue","Engineering Docs Approval IFR","Engineering Approval IFA","Engineering Approval IFC",
+  "Engineering IFI","Master Schedule Submission","Material Subvendor Procurement","Pre Inspection Meeting",
+  "Fabrication Start","Fabrication Completion","Pretest Report","Fabrication Acceptance Test","Punch List",
+  "Non Conformity Report","Recovery Schedule","Re-FAT","Unit Delivery Inspection","ETD","ETA","ATD","ATA",
+  "Goods Receipt","Site Inspection Report","Site Acceptance Test","Payment Term","Liquid Damage",
+  "Master Document Register","Closed PO"
+];
+
+function doLogin() {
+  const username = document.getElementById("loginUsername").value.trim();
+  const password = document.getElementById("loginPassword").value;
+  const errEl = document.getElementById("loginError");
+  const btn = document.getElementById("loginBtn");
+  errEl.textContent = "";
+  if (!username || !password) { errEl.textContent = "Username dan password wajib diisi."; return; }
+  btn.disabled = true; btn.textContent = "Memeriksa...";
+  apiCall("login", { username: username, password: password }, "POST")
+    .then(res => {
+      btn.disabled = false; btn.textContent = "Masuk Dashboard →";
+      if (!res || !res.success) { errEl.textContent = (res && res.error) || "Username atau password salah."; return; }
+      const role = res.role === "Admin" ? "Admin" : "User";
+      const name = res.name || username;
+      localStorage.setItem("expLoggedIn", "1");
+      localStorage.setItem("expUserName", name);
+      localStorage.setItem("expRole", role);
+      setRole(role, true);
+      document.getElementById("loginScreen").style.display = "none";
+      document.getElementById("appRoot").style.display = "block";
+      document.getElementById("topUserName").textContent = name;
+      document.getElementById("loginPassword").value = "";
+      initApp();
+      startInactivityWatcher();
+    })
+    .catch(err => {
+      btn.disabled = false; btn.textContent = "Masuk Dashboard →";
+      errEl.textContent = "Tidak dapat terhubung ke server: " + err.message;
+    });
+}
+function logout() {
+  localStorage.removeItem("expLoggedIn");
+  localStorage.removeItem("expUserName");
+  document.getElementById("userDropdown").classList.remove("open");
+  document.getElementById("appRoot").style.display = "none";
+  document.getElementById("loginScreen").style.display = "flex";
+  document.getElementById("loginUsername").value = "";
+  document.getElementById("loginPassword").value = "";
+  if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+  stopInactivityWatcher();
+}
+
+/* ===== Inactivity auto-logout (15 minutes without click/scroll) ===== */
+let inactivityTimer = null;
+const INACTIVITY_LIMIT_MS = 15 * 60 * 1000;
+function handleUserActivity() { resetInactivityTimer(); }
+function resetInactivityTimer() {
+  clearTimeout(inactivityTimer);
+  inactivityTimer = setTimeout(autoLogoutInactive, INACTIVITY_LIMIT_MS);
+}
+function startInactivityWatcher() {
+  document.addEventListener("click", handleUserActivity);
+  document.addEventListener("scroll", handleUserActivity, true);
+  resetInactivityTimer();
+}
+function stopInactivityWatcher() {
+  document.removeEventListener("click", handleUserActivity);
+  document.removeEventListener("scroll", handleUserActivity, true);
+  clearTimeout(inactivityTimer);
+  inactivityTimer = null;
+}
+function autoLogoutInactive() {
+  showToast("Sesi berakhir karena 15 menit tidak ada aktivitas. Silakan login kembali.", true);
+  logout();
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  document.getElementById("currentDate").textContent =
+    new Date().toLocaleDateString("id-ID", { weekday:"long", year:"numeric", month:"long", day:"numeric" });
+  initTheme();
+  if (window.innerWidth <= 768) document.getElementById("sidebar").classList.add("collapsed");
+  updateConnDot(!!API_BASE_URL && API_BASE_URL !== "PASTE_URL_WEB_APP_DI_SINI", true);
+
+  // Always require a fresh login on every visit/reload — no auto-login from a saved session.
+  localStorage.removeItem("expLoggedIn");
+  document.getElementById("loginScreen").style.display = "flex";
+  document.getElementById("appRoot").style.display = "none";
+
+  document.addEventListener("click", (e) => {
+    if (!e.target.closest(".user-menu-wrap")) document.getElementById("userDropdown").classList.remove("open");
+  });
+});
+
+function initApp() {
+  if (API_BASE_URL) { loadDashboard(); loadCurrencyRates(); } else { showSetupBanner(true); }
+  if (autoRefreshTimer) clearInterval(autoRefreshTimer);
+  autoRefreshTimer = setInterval(refreshData, 15 * 60 * 1000);
+}
+
+function showSetupBanner(show) { document.getElementById("setupBanner").style.display = show ? "flex" : "none"; }
+function updateConnDot(ok, unknown) {
+  const el = document.getElementById("connDot");
+  el.className = "conn-dot" + (unknown ? "" : (ok ? " ok" : " bad"));
+}
+
+function setRole(role, silent) {
+  localStorage.setItem("expRole", role);
+  document.body.classList.remove("role-Admin", "role-User");
+  document.body.classList.add("role-" + role);
+  document.getElementById("roleLabelTop").textContent = role;
+  document.getElementById("rolePill").textContent = role;
+  document.getElementById("rolePill").className = "role-pill " + role;
+  if (role === "User" && (currentPage === "master" || currentPage === "users")) navTo("dashboard");
+  if (!silent) showToast("Masuk sebagai " + role);
+}
+function toggleUserMenu() { document.getElementById("userDropdown").classList.toggle("open"); }
+
+function initTheme() {
+  const theme = localStorage.getItem("expTheme") || "light";
+  setTheme(theme, true);
+}
+function setTheme(theme, silent) {
+  localStorage.setItem("expTheme", theme);
+  document.body.classList.toggle("dark", theme === "dark");
+  document.getElementById("themeLightBtn").classList.toggle("active", theme === "light");
+  document.getElementById("themeDarkBtn").classList.toggle("active", theme === "dark");
+  if (!silent) showToast("Tampilan diubah ke " + theme);
+}
+
+function toggleSidebar() {
+  document.getElementById("sidebar").classList.toggle("collapsed");
+}
+let sidebarAutoCollapsed = window.innerWidth <= 768;
+window.addEventListener("resize", () => {
+  const narrow = window.innerWidth <= 768;
+  const sb = document.getElementById("sidebar");
+  if (narrow && !sidebarAutoCollapsed) {
+    sb.classList.add("collapsed");
+    sidebarAutoCollapsed = true;
+  } else if (!narrow && sidebarAutoCollapsed) {
+    sb.classList.remove("collapsed");
+    sidebarAutoCollapsed = false;
+  }
+});
+function navTo(page) {
+  const el = document.querySelector(`.nav-item[onclick*="'${page}'"]`);
+  showPage(page, el);
+}
+
+function loadDashboard() {
+  showLoading(true);
+  const days = document.getElementById("upcomingDaysSelect") ? document.getElementById("upcomingDaysSelect").value : 30;
+  apiCall("getDashboardData", { upcomingDays: days })
+    .then(data => { dashData = data; renderAll(data); updateConnDot(true); showLoading(false); })
+    .catch(err => { showLoading(false); updateConnDot(false); showToast("Error: " + err.message, true); });
+}
+
+function loadCurrencyRates() {
+  apiCall("getCurrencyRates", {}).then(res => { if (res.success && res.data && Object.keys(res.data).length) currencyRates = res.data; }).catch(() => {});
+}
+
+function refreshData() {
+  if (!API_BASE_URL) return;
+  if (currentPage === "dashboard") loadDashboard();
+  else loadPageData(currentPage);
+}
+
+function renderAll(d) {
+  if (!d || !d.success) { showToast("Gagal memuat data: " + (d ? d.error : "unknown"), true); return; }
+  showSetupBanner(false);
+
+  const critItems = d.criticalItems || [];
+  const critDelay = critItems.filter(r => (r["Status"]||"").toUpperCase() === "DELAY").length;
+  const critAtRisk = critItems.filter(r => (r["Status"]||"").toUpperCase() === "AT RISK").length;
+
+  $("#kpiPOTotal").textContent = (Number(d.kpi.poPlan||0) + Number(d.kpi.poActual||0));
+  $("#kpiPOPlan").textContent   = d.kpi.poPlan;
+  $("#kpiPOActual").textContent = d.kpi.poActual;
+
+  $("#kpiCritTotal").textContent = critItems.length || (Number(d.kpi.criticalPlan||0) + Number(d.kpi.criticalActual||0));
+  $("#kpiCritDelay").textContent  = critDelay;
+  $("#kpiCritAtRisk").textContent = critAtRisk;
+
+  $("#kpiOverdue").textContent  = d.kpi.overdueItems;
+
+  $("#kpiActionsTotal").textContent = (Number(d.kpi.openActions||0) + Number(d.kpi.closedActions||0));
+  $("#kpiOpenAct").textContent  = d.kpi.openActions;
+  $("#kpiCloseAct").textContent = d.kpi.closedActions;
+
+  $("#kpiFAT").textContent = d.kpi.upcomingFAT;
+  $("#kpiFATPlan").textContent = d.kpi.fatPlan != null ? d.kpi.fatPlan : "—";
+  $("#kpiFATConfirmed").textContent = d.kpi.fatActual != null ? d.kpi.fatActual : "—";
+
+  $("#progActual").textContent   = d.progress.actual + "%";
+  const v = d.progress.variance;
+  $("#progVariance").textContent = (v > 0 ? "+" : "") + v + "%";
+  $("#progVariance").style.color = v >= 0 ? "#27AE60" : "#E74C3C";
+
+  $("#badgePO").textContent = d.kpi.criticalItems;
+  $("#badgePO").classList.toggle("zero", d.kpi.criticalItems === 0);
+  $("#badgeFAT").textContent = d.kpi.upcomingFAT;
+  $("#badgeFAT").classList.toggle("zero", d.kpi.upcomingFAT === 0);
+  $("#badgeActions").textContent = d.kpi.openActions;
+  $("#badgeActions").classList.toggle("zero", d.kpi.openActions === 0);
+
+  renderCriticalTable(d.criticalItems);
+  renderSCurve(d.sCurve);
+  renderRiskTable(d.risks);
+  renderWarnings(d.warnings);
+  renderFATTable(d.fatSchedule);
+  renderActionTable(d.actions);
+  renderShipmentTable(d.shipments);
+}
+
+function renderCriticalTable(items) {
+  const tb = $("#criticalTable");
+  if (!items || !items.length) { tb.innerHTML = "<tr><td colspan='5' style='text-align:center;padding:20px;color:#999'>Tidak ada data kritis</td></tr>"; return; }
+  tb.innerHTML = items.map(r => `
+    <tr><td>${r["Item_Description"]||""}</td><td>${r["Vendor"]||""}</td><td>${r["RDD"]||""}</td>
+    <td class="${delayClass(r["Delay_Days"])}">${r["Delay_Days"]||0}</td><td>${statusBadge(r["Status"])}</td></tr>`).join("");
+}
+
+function renderSCurve(data) {
+  const labels  = (data||[]).map(r => r["Month"]);
+  const planned = (data||[]).map(r => r["Planned_Pct"] !== "" ? Number(r["Planned_Pct"]) : null);
+  const actual  = (data||[]).map(r => r["Actual_Pct"]  !== "" ? Number(r["Actual_Pct"])  : null);
+  if (sCurveChart) sCurveChart.destroy();
+  const ctx = document.getElementById("sCurveChart").getContext("2d");
+  sCurveChart = new Chart(ctx, {
+    type: "line",
+    data: { labels, datasets: [
+      { label: "Planned", data: planned, borderColor: "#2E6DB4", borderDash: [5,4], tension: .4, pointRadius: 3, fill: false },
+      { label: "Actual",  data: actual,  borderColor: "#27AE60", tension: .4, pointRadius: 4, fill: false },
+    ]},
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { position: "bottom", labels: { font: { size: 11 }, boxWidth: 20 } } },
+      scales: { y: { min: 0, max: 100, ticks: { callback: v => v + "%" } }, x: { ticks: { maxRotation: 45, font: { size: 10 } } } }
+    }
+  });
+}
+
+function renderRiskTable(risks) {
+  const tb = $("#riskTable");
+  if (!risks || !risks.length) { tb.innerHTML = "<tr><td colspan='4' style='text-align:center;padding:20px;color:#999'>Tidak ada data</td></tr>"; return; }
+  tb.innerHTML = risks.map(r => `
+    <tr><td><strong>${r["Vendor"]||""}</strong></td><td>${riskBadge(r["Schedule_Risk"])}</td>
+    <td>${riskBadge(r["Quality_Risk"])}</td><td>${riskBadge(r["Overall_Risk"])}</td></tr>`).join("");
+}
+
+function renderWarnings(warnings) {
+  const el = $("#warningList");
+  if (!warnings || !warnings.length) { el.innerHTML = "<div style='padding:20px;text-align:center;color:#999'>Tidak ada peringatan aktif</div>"; return; }
+  el.innerHTML = warnings.map(w => `
+    <div class="warning-item"><span class="w-icon">${w.type === "danger" ? "🔴" : w.type === "warning" ? "🟠" : "🔵"}</span>
+    <span class="w-msg">${w.message}</span><span class="w-date">${w.date}</span></div>`).join("");
+}
+
+function renderFATTable(fat) {
+  const tb = $("#fatTable");
+  if (!fat || !fat.length) { tb.innerHTML = "<tr><td colspan='5' style='text-align:center;padding:20px;color:#999'>Tidak ada data</td></tr>"; return; }
+  tb.innerHTML = fat.map(r => `
+    <tr><td>${r["Item"]||""}</td><td>${r["Vendor"]||""}</td><td>${r["FAT_Date"]||""}</td>
+    <td>${r["Location"]||""}</td><td>${statusBadge(r["Status"])}</td></tr>`).join("");
+}
+
+function renderActionTable(actions) {
+  const tb = $("#actionTable");
+  if (!actions || !actions.length) { tb.innerHTML = "<tr><td colspan='5' style='text-align:center;padding:20px;color:#999'>Tidak ada action terbuka</td></tr>"; return; }
+  tb.innerHTML = actions.map(r => `
+    <tr><td>${r["Date"]||""}</td><td>${r["Item"]||""}</td>
+    <td style="max-width:180px;white-space:normal">${r["Issue_Action"]||""}</td>
+    <td>${r["PIC_Vendor"]||""}</td><td style="color:#E74C3C;font-weight:600">${r["Due_Date"]||""}</td></tr>`).join("");
+}
+
+function renderShipmentTable(shipments) {
+  const tb = $("#shipmentTable");
+  if (!shipments || !shipments.length) { tb.innerHTML = "<tr><td colspan='8' style='text-align:center;padding:20px;color:#999'>Tidak ada data</td></tr>"; return; }
+  tb.innerHTML = shipments.map(r => `
+    <tr><td>${r["Item"]||""}</td><td>${r["Vessel_Mode"]||""}</td><td>${r["ETD"]||""}</td><td>${r["ETA"]||""}</td>
+    <td>${r["POL"]||""}</td><td>${r["POD"]||""}</td><td>${r["Current_Location"]||""}</td><td>${statusBadge(r["Status"])}</td></tr>`).join("");
+}
+
+function showPage(page, el) {
+  document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.getElementById("page-" + page).classList.add("active");
+  if (el) el.classList.add("active");
+  currentPage = page;
+  if (page !== "dashboard" && API_BASE_URL) loadPageData(page);
+  if (page === "reports" && API_BASE_URL) renderReportCharts();
+  if (window.innerWidth <= 768) document.getElementById("sidebar").classList.add("collapsed");
+}
+
+function loadPageData(page) {
+  showLoading(true);
+  const fnMap = {
+    po:        ["getAllPO",         d => { poRawData = d; renderPODetail(); }],
+    milestone: ["getAllMilestones", renderMilestoneDetail],
+    vendor:    ["getAllRisks",      renderVendorDetail],
+    fat:       ["getAllFAT",        renderFATDetail],
+    shipment:  ["getAllShipments",  renderShipmentDetail],
+    actions:   ["getAllActions",    renderActionDetail],
+    master:    ["getAllMasterData", renderMasterDetail],
+    users:     ["getAllUsers",      renderUserDetail],
+  };
+  const entry = fnMap[page];
+  if (!entry) { showLoading(false); return; }
+  const [action, renderer] = entry;
+  apiCall(action, {})
+    .then(res => { if (res.success) renderer(res.data); else showToast("Error: " + res.error, true); showLoading(false); })
+    .catch(err => { showLoading(false); showToast("Error: " + err.message, true); });
+}
+
+function setPOTab(tab) {
+  poTabFilter = tab;
+  ["All","Plan","Actual"].forEach(t => $("#poTab"+t).classList.toggle("active", t === tab));
+  renderPODetail();
+}
+const DEFAULT_CURRENCY = "IDR";
+
+function convertValue(usd, currency = DEFAULT_CURRENCY) { return Number(usd || 0) * (currencyRates[currency] || currencyRates[DEFAULT_CURRENCY]);
+}
+ 
+function renderPODetail() {
+  const tb = $("#poTable");
+  const q = ($("#poSearch") ? $("#poSearch").value : "").toLowerCase();
+  const currency = $("#poCurrency") ? $("#poCurrency").value : "IDR";
+  let data = poRawData.filter(r => {
+    const matchTab = poTabFilter === "All" || String(r["PO_Type"]||"Actual").toLowerCase() === poTabFilter.toLowerCase();
+    const matchQ = !q || [r["PO_ID"],r["Item_Description"],r["Vendor"]].some(v => String(v||"").toLowerCase().includes(q));
+    return matchTab && matchQ;
+  });
+  if (!data.length) { tb.innerHTML = "<tr><td colspan='14' style='text-align:center;padding:30px;color:#999'>Tidak ada data</td></tr>"; return; }
+  tb.innerHTML = data.map(r => {
+    const val = convertValue(r["Value_USD"], currency);
+    const valStr = val.toLocaleString(currency === "IDR" ? "id-ID" : "en-US", {style:"currency", currency, maximumFractionDigits: 0});
+    return `<tr>
+      <td>${r["PO_ID"]||""}</td><td>${statusBadge(r["PO_Type"]||"Actual")}</td><td>${r["Package"]||""}</td>
+      <td>${r["Item_Description"]||""}</td><td>${r["Vendor"]||""}</td><td>${r["PO_Date"]||""}</td>
+      <td>${r["RDD"]||""}</td><td>${r["FDD"]||""}</td><td>${statusBadge(r["Status"])}</td>
+      <td class="${delayClass(r["Delay_Days"])}">${r["Delay_Days"]||0}</td><td>${valStr}</td>
+      <td>${r["Unpriced_PDF_URL"] ? `<a class="link-icon" href="${r["Unpriced_PDF_URL"]}" target="_blank">📄 Lihat</a>` : `<span class="admin-only-inline"><input type="file" accept="application/pdf" style="font-size:10px;width:110px" onchange="uploadForRow(this,'PO_Tracking','${r["PO_ID"]}','Unpriced_PDF_URL')"></span>`}</td>
+      <td style="max-width:180px;white-space:normal">${r["Notes"]||""}</td>
+      <td class="admin-only-inline"><div class="row-actions">
+        <button class="btn-mini edit" onclick='openEditModal("PO_Tracking", ${JSON.stringify(r)})'>Edit</button>
+        <button class="btn-mini del" onclick="deleteRowUI('PO_Tracking','${r["PO_ID"]}','po')">Hapus</button>
+      </div></td>
+    </tr>`;
+  }).join("");
+}
+
+function renderMilestoneDetail(data) {
+  const tb = $("#milestoneTable");
+  tb.innerHTML = data.map(r => `<tr>
+    <td>${r["Milestone_ID"]||""}</td>
+    <td><a class="link-icon" href="javascript:void(0)" onclick="goToPO('${r["PO_ID"]}')">${r["PO_ID"]||""}</a></td>
+    <td>${r["Vendor"]||""}</td><td>${r["Milestone"]||""}</td><td>${r["Planned_Date"]||""}</td><td>${r["Actual_Date"]||""}</td>
+    <td>${statusBadge(r["Status"])}</td>
+    <td><div style="background:#eee;border-radius:4px;overflow:hidden;width:80px;display:inline-block;vertical-align:middle">
+      <div style="background:${Number(r["Completion_Pct"]||0)===100?"#27AE60":"#2E6DB4"};width:${r["Completion_Pct"]||0}%;height:12px"></div></div>
+      <span style="margin-left:6px">${r["Completion_Pct"]||0}%</span></td>
+    <td class="admin-only-inline"><div class="row-actions">
+      <button class="btn-mini edit" onclick='openEditModal("Milestone_Tracking", ${JSON.stringify(r)})'>Edit</button>
+      <button class="btn-mini del" onclick="deleteRowUI('Milestone_Tracking','${r["Milestone_ID"]}','milestone')">Hapus</button>
+    </div></td>
+  </tr>`).join("");
+}
+function goToPO(poId) {
+  navTo("po");
+  setTimeout(() => { $("#poSearch").value = poId; renderPODetail(); }, 300);
+}
+
+function renderVendorDetail(data) {
+  const tb = $("#vendorTable");
+  if (!data || !data.length) { tb.innerHTML = "<tr><td colspan='7' style='text-align:center;padding:30px;color:#999'>Tidak ada data</td></tr>"; return; }
+  tb.innerHTML = data.map(r => `<tr>
+    <td><strong>${r["Vendor"]||""}</strong></td><td>${r["Category"]||""}</td>
+    <td>${riskBadge(r["Schedule_Risk"])}</td><td>${riskBadge(r["Quality_Risk"])}</td><td>${riskBadge(r["Overall_Risk"])}</td>
+    <td style="max-width:220px;white-space:normal">${r["Description"]||""}</td>
+    <td style="max-width:220px;white-space:normal">${r["Mitigation"]||""}</td>
+  </tr>`).join("");
+}
+
+function renderFATDetail(data) {
+  const tb = $("#fatDetailTable");
+  tb.innerHTML = data.map(r => `<tr>
+    <td>${r["FAT_ID"]||""}</td><td>${r["Item"]||""}</td><td>${r["Vendor"]||""}</td><td>${r["FAT_Date"]||""}</td>
+    <td>${r["Location"] ? `<a class="link-icon" target="_blank" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(r["Location"])}">📍 ${r["Location"]}</a>` : ""}</td>
+    <td>${statusBadge(r["Status"])}</td><td>${r["Inspector"]||""}</td>
+    <td>${r["FAT_Report_URL"] ? `<a class="link-icon" target="_blank" href="${r["FAT_Report_URL"]}">📄 Report</a>` : `<span class="admin-only-inline"><input type="file" accept="application/pdf" style="font-size:10px;width:100px" onchange="uploadForRow(this,'FAT_Schedule','${r["FAT_ID"]}','FAT_Report_URL')"></span>`}</td>
+    <td>${r["Realtime_Photo_URL"] ? `<a class="link-icon" target="_blank" href="${r["Realtime_Photo_URL"]}">🖼️ Foto</a>` : `<span class="admin-only-inline"><input type="file" accept="image/jpeg,image/png" style="font-size:10px;width:100px" onchange="uploadForRow(this,'FAT_Schedule','${r["FAT_ID"]}','Realtime_Photo_URL')"></span>`}</td>
+    <td style="max-width:180px;white-space:normal">${r["Notes"]||""}</td>
+    <td class="admin-only-inline"><div class="row-actions">
+      <button class="btn-mini edit" onclick='openEditModal("FAT_Schedule", ${JSON.stringify(r)})'>Edit</button>
+      <button class="btn-mini del" onclick="deleteRowUI('FAT_Schedule','${r["FAT_ID"]}','fat')">Hapus</button>
+    </div></td>
+  </tr>`).join("");
+}
+
+function renderShipmentDetail(data) {
+  const tb = $("#shipmentDetailTable");
+  tb.innerHTML = data.map(r => `<tr>
+    <td>${r["Shipment_ID"]||""}</td><td>${r["Item"]||""}</td><td>${r["Vessel_Mode"]||""}</td>
+    <td>${r["ETD"]||""}</td><td>${r["ETA"]||""}</td><td>${r["POL"]||""}</td><td>${r["POD"]||""}</td>
+    <td>${r["Current_Location"]||""}</td><td>${statusBadge(r["Status"])}</td>
+    <td>${r["Marine_Tracking_URL"] ? `<a class="link-icon" target="_blank" href="${r["Marine_Tracking_URL"]}">🛰️ Track</a>` : "—"}</td>
+    <td>${r["WhatsApp_URL"] ? `<a class="link-icon" target="_blank" href="${r["WhatsApp_URL"]}">💬 Chat</a>` : "—"}</td>
+    <td style="max-width:160px;white-space:normal">${r["Notes"]||""}</td>
+    <td class="admin-only-inline"><div class="row-actions">
+      <button class="btn-mini edit" onclick='openEditModal("Shipment_Tracking", ${JSON.stringify(r)})'>Edit</button>
+      <button class="btn-mini del" onclick="deleteRowUI('Shipment_Tracking','${r["Shipment_ID"]}','shipment')">Hapus</button>
+    </div></td>
+  </tr>`).join("");
+}
+
+function renderActionDetail(data) {
+  const tb = $("#actionDetailTable");
+  tb.innerHTML = data.map(r => `<tr>
+    <td>${r["Action_ID"]||""}</td><td>${r["Date"]||""}</td><td>${r["Item"]||""}</td>
+    <td style="max-width:200px;white-space:normal">${r["Issue_Action"]||""}</td>
+    <td>${r["PIC_Vendor"]||""}</td><td style="color:#E74C3C;font-weight:600">${r["Due_Date"]||""}</td>
+    <td>${statusBadge(r["Status"])}</td><td>${r["Closed_Date"]||""}</td>
+    <td><div class="row-actions">
+      ${r["Status"] === "OPEN" || r["Status"] === "PENDING" ? `<button class="btn-mini edit" onclick="closeAction('${r["Action_ID"]}')">Close</button>` : ""}
+      <span class="admin-only-inline" style="display:contents">
+        <button class="btn-mini edit" onclick='openEditModal("Action_Log", ${JSON.stringify(r)})'>Edit</button>
+        <button class="btn-mini del" onclick="deleteRowUI('Action_Log','${r["Action_ID"]}','actions')">Hapus</button>
+      </span>
+    </div></td>
+  </tr>`).join("");
+}
+
+function renderMasterDetail(data) {
+  const tb = $("#masterTable");
+  tb.innerHTML = data.map(r => `<tr>
+    <td>${r["Type"]||""}</td><td>${r["Key"]||""}</td><td>${r["Value"]||""}</td><td>${r["Notes"]||""}</td>
+    <td class="admin-only-inline"><div class="row-actions">
+      <button class="btn-mini edit" onclick='openEditModal("Master_Data", ${JSON.stringify(r)})'>Edit</button>
+      <button class="btn-mini del" onclick="deleteRowUI('Master_Data','${r["Key"]}','master')">Hapus</button>
+    </div></td>
+  </tr>`).join("");
+}
+function renderUserDetail(data) {
+  const tb = $("#userTable");
+  tb.innerHTML = data.map(r => `<tr>
+    <td>${r["User_ID"]||""}</td><td>${r["Name"]||""}</td><td>${r["Email"]||""}</td>
+    <td>${statusBadge(r["Role"])}</td><td>${statusBadge(r["Status"])}</td>
+    <td class="admin-only-inline"><div class="row-actions">
+      <button class="btn-mini edit" onclick='openEditModal("User_Management", ${JSON.stringify(r)})'>Edit</button>
+      <button class="btn-mini del" onclick="deleteRowUI('User_Management','${r["User_ID"]}','users')">Hapus</button>
+    </div></td>
+  </tr>`).join("");
+}
+
+function closeAction(id) {
+  if (!confirm("Tutup action " + id + "?")) return;
+  showLoading(true);
+  apiCall("closeAction", { actionId: id }, "POST")
+    .then(res => { showLoading(false); showToast(res.message || "Action ditutup"); loadPageData("actions"); })
+    .catch(err => { showLoading(false); showToast("Error: " + err.message, true); });
+}
+
+function deleteRowUI(sheet, keyValue, page) {
+  if (!confirm("Yakin ingin menghapus data ini?")) return;
+  showLoading(true);
+  apiCall("deleteRow", { sheet: sheet, keyColumn: KEY_COLUMNS[sheet], keyValue: keyValue }, "POST")
+    .then(res => { showLoading(false); showToast(res.message || "Data dihapus"); loadPageData(page); })
+    .catch(err => { showLoading(false); showToast("Error: " + err.message, true); });
+}
+
+function uploadForRow(inputEl, sheet, keyValue, fieldName) {
+  const file = inputEl.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function() {
+    const base64 = reader.result.split(",")[1];
+    showLoading(true);
+    apiCall("uploadFileToDrive", { base64Data: base64, fileName: file.name, mimeType: file.type }, "POST")
+      .then(res => {
+        if (!res.success) { showLoading(false); showToast("Upload gagal: " + res.error, true); return; }
+        const data = {}; data[fieldName] = res.url;
+        return apiCall("updateRow", { sheet: sheet, keyColumn: KEY_COLUMNS[sheet], keyValue: keyValue, newData: data }, "POST")
+          .then(() => { showLoading(false); showToast("File berhasil diupload"); loadPageData(currentPage); });
+      })
+      .catch(err => { showLoading(false); showToast("Error upload: " + err.message, true); });
+  };
+  reader.readAsDataURL(file);
+}
+
+const SHEET_FORMS = {
+  "PO_Tracking": [
+    {id:"PO_ID",label:"PO ID"},{id:"PO_Type",label:"Tipe",type:"select",opts:["Actual","Plan"]},
+    {id:"Package",label:"Package"},{id:"Item_Description",label:"Item Description"},
+    {id:"Vendor",label:"Vendor"},{id:"PO_Date",label:"PO Date (dd Mon yyyy)"},{id:"RDD",label:"RDD"},
+    {id:"FDD",label:"FDD"},{id:"Status",label:"Status",type:"select",opts:["ON TIME","AT RISK","DELAY","PLAN"]},
+    {id:"Delay_Days",label:"Delay Days",type:"number"},{id:"Value_USD",label:"Value (USD)",type:"number"},
+    {id:"Unpriced_PDF_URL",label:"Unpriced PO URL (opsional)"},{id:"Notes",label:"Notes"}
+  ],
+  "Milestone_Tracking": [
+    {id:"Milestone_ID",label:"Milestone ID"},{id:"PO_ID",label:"PO ID (Link ke PO Tracking)"},{id:"Vendor",label:"Vendor"},
+    {id:"Milestone",label:"Milestone",type:"select",opts:MILESTONE_OPTIONS},
+    {id:"Planned_Date",label:"Planned Date"},{id:"Actual_Date",label:"Actual Date"},
+    {id:"Status",label:"Status",type:"select",opts:["PENDING","IN PROGRESS","COMPLETE","DELAY","AT RISK","CONFIRMED"]},
+    {id:"Completion_Pct",label:"Completion %",type:"number"},{id:"Notes",label:"Notes"}
+  ],
+  "FAT_Schedule": [
+    {id:"FAT_ID",label:"FAT ID"},{id:"Item",label:"Item"},{id:"Vendor",label:"Vendor"},
+    {id:"FAT_Date",label:"FAT Date"},{id:"Location",label:"Location (alamat untuk Google Maps)"},
+    {id:"Status",label:"Status",type:"select",opts:["Confirmed","Tentative","Plan","Ongoing","Complete"]},
+    {id:"Inspector",label:"Inspector"},{id:"FAT_Report_URL",label:"FAT Report URL (opsional)"},
+    {id:"Realtime_Photo_URL",label:"Realtime Photo URL (opsional)"},{id:"Notes",label:"Notes"}
+  ],
+  "Shipment_Tracking": [
+    {id:"Shipment_ID",label:"Shipment ID"},{id:"Item",label:"Item"},{id:"Vessel_Mode",label:"Vessel/Mode"},
+    {id:"ETD",label:"ETD"},{id:"ETA",label:"ETA"},{id:"POL",label:"POL"},{id:"POD",label:"POD"},
+    {id:"Current_Location",label:"Current Location"},
+    {id:"Status",label:"Status",type:"select",opts:["Scheduled","On the way","Booking","Arrived"]},
+    {id:"Marine_Tracking_URL",label:"Link Marine Tracking"},{id:"WhatsApp_URL",label:"Link WhatsApp Driver/Ekspedisi"},
+    {id:"Notes",label:"Notes"}
+  ],
+  "Action_Log": [
+    {id:"Action_ID",label:"Action ID"},{id:"Date",label:"Date"},{id:"Item",label:"Item"},
+    {id:"Issue_Action",label:"Issue / Action"},{id:"PIC_Vendor",label:"PIC Vendor"},{id:"Due_Date",label:"Due Date"},
+    {id:"Status",label:"Status",type:"select",opts:["OPEN","PENDING","CLOSED"]},{id:"Notes",label:"Notes"}
+  ],
+  "Master_Data": [
+    {id:"Type",label:"Type",type:"select",opts:["Currency","Vendor","Package"]},
+    {id:"Key",label:"Key"},{id:"Value",label:"Value"},{id:"Notes",label:"Notes"}
+  ],
+  "User_Management": [
+    {id:"User_ID",label:"User ID"},{id:"Name",label:"Name"},{id:"Email",label:"Email"},
+    {id:"Role",label:"Role",type:"select",opts:["Admin","User"]},
+    {id:"Status",label:"Status",type:"select",opts:["Active","Inactive"]}
+  ]
+};
+
+function openAddModal(sheet) {
+  currentSheet = sheet; editKeyValue = null;
+  const fields = SHEET_FORMS[sheet] || [];
+  $("#modalTitle").textContent = "Tambah Data - " + sheet.replace(/_/g," ");
+  $("#modalBody").innerHTML = fields.map(f => `
+    <div class="form-group"><label class="form-label">${f.label}</label>
+      ${f.type === "select"
+        ? `<select id="mf_${f.id}" class="form-control">${(f.opts||[]).map(o => `<option>${o}</option>`).join("")}</select>`
+        : `<input id="mf_${f.id}" type="${f.type||"text"}" class="form-control" placeholder="${f.label}">`}
+    </div>`).join("");
+  document.getElementById("addModal").classList.add("open");
+}
+
+function openEditModal(sheet, rowData) {
+  currentSheet = sheet;
+  const keyCol = KEY_COLUMNS[sheet];
+  editKeyValue = rowData[keyCol];
+  const fields = SHEET_FORMS[sheet] || [];
+  $("#modalTitle").textContent = "Edit Data - " + sheet.replace(/_/g," ");
+  $("#modalBody").innerHTML = fields.map(f => `
+    <div class="form-group"><label class="form-label">${f.label}</label>
+      ${f.type === "select"
+        ? `<select id="mf_${f.id}" class="form-control">${(f.opts||[]).map(o => `<option ${String(rowData[f.id])===o?"selected":""}>${o}</option>`).join("")}</select>`
+        : `<input id="mf_${f.id}" type="${f.type||"text"}" class="form-control" value="${rowData[f.id]!==undefined?rowData[f.id]:""}" ${f.id===keyCol?"readonly":""}>`}
+    </div>`).join("");
+  document.getElementById("addModal").classList.add("open");
+}
+
+function closeModal() { document.getElementById("addModal").classList.remove("open"); }
+
+function submitModal() {
+  const fields = SHEET_FORMS[currentSheet] || [];
+  const rowData = {};
+  fields.forEach(f => { const el = document.getElementById("mf_" + f.id); rowData[f.id] = el ? el.value : ""; });
+  showLoading(true);
+  const pageForSheet = {
+    "PO_Tracking":"po","Milestone_Tracking":"milestone","FAT_Schedule":"fat","Shipment_Tracking":"shipment",
+    "Action_Log":"actions","Master_Data":"master","User_Management":"users"
+  }[currentSheet];
+  const call = editKeyValue
+    ? apiCall("updateRow", { sheet: currentSheet, keyColumn: KEY_COLUMNS[currentSheet], keyValue: editKeyValue, newData: rowData }, "POST")
+    : apiCall("addRow", { sheet: currentSheet, rowData: rowData }, "POST");
+  call.then(res => {
+    showLoading(false); closeModal();
+    showToast(res.message || (editKeyValue ? "Data berhasil diupdate" : "Data berhasil disimpan"));
+    if (currentPage !== "dashboard") loadPageData(pageForSheet || currentPage);
+  }).catch(err => { showLoading(false); showToast("Error: " + err.message, true); });
+}
+
+let reportCharts = [];
+let reportPOData = [];
+let reportFATData = [];
+let reportActionsData = [];
+
+function renderReportCharts() {
+  showLoading(true);
+  Promise.all([
+    apiCall("getDashboardData", { upcomingDays: 365 }),
+    apiCall("getAllPO", {}),
+    apiCall("getAllFAT", {}),
+    apiCall("getAllActions", {})
+  ]).then(([dash, poRes, fatRes, actRes]) => {
+    reportPOData = (poRes && poRes.success) ? poRes.data : [];
+    reportFATData = (fatRes && fatRes.success) ? fatRes.data : [];
+    reportActionsData = (actRes && actRes.success) ? actRes.data : [];
+    buildReports(dash);
+    showLoading(false);
+  }).catch(err => { showLoading(false); showToast("Error: " + err.message, true); });
+}
+
+function buildReports(d) {
+  if (!d || !d.success) return;
+  $("#reportDate").textContent = "Laporan Visual Diagram · Generated: " +
+    new Date().toLocaleDateString("id-ID", { day: "2-digit", month: "long", year: "numeric" });
+
+  reportCharts.forEach(c => c.destroy());
+  reportCharts = [];
+
+  const mkBar = (id, labels, values, colors, horizontal) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const c = new Chart(el.getContext("2d"), {
+      type: "bar",
+      data: { labels, datasets: [{ data: values, backgroundColor: colors }] },
+      options: {
+        indexAxis: horizontal ? "y" : "x",
+        plugins: { legend: { display: false } },
+        responsive: true,
+        scales: { y: { beginAtZero: true } }
+      }
+    });
+    reportCharts.push(c);
+  };
+  const mkDonut = (id, labels, values, colors) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const c = new Chart(el.getContext("2d"), {
+      type: "doughnut",
+      data: { labels, datasets: [{ data: values, backgroundColor: colors }] },
+      options: { plugins: { legend: { position: "bottom", labels: { boxWidth: 12, font: { size: 11 } } } }, responsive: true }
+    });
+    reportCharts.push(c);
+  };
+
+  const poData = reportPOData;
+  const fatData = reportFATData;
+  const actData = reportActionsData;
+  const critItems = d.criticalItems || [];
+
+  /* ===== 1. TOTAL PO SUMMARY ===== */
+  const totalPO = poData.length;
+  const actualPO = poData.filter(r => (r["PO_Type"] || "Actual") === "Actual").length;
+  const planPO = poData.filter(r => r["PO_Type"] === "Plan").length;
+  const statusCounts = { DELAY: 0, "AT RISK": 0, "ON TIME": 0, PLAN: 0 };
+  const pkgCounts = {};
+  poData.forEach(r => {
+    const st = (r["Status"] || "").toUpperCase();
+    if (statusCounts.hasOwnProperty(st)) statusCounts[st]++;
+    const pkg = r["Package"] || "—";
+    pkgCounts[pkg] = (pkgCounts[pkg] || 0) + 1;
+  });
+  $("#rTotalPO").textContent = totalPO;
+  $("#rActualPO").textContent = actualPO;
+  $("#rPlanPO").textContent = planPO;
+  $("#rDelayAtRiskPO").textContent = statusCounts.DELAY + statusCounts["AT RISK"];
+  mkBar("chartPOStatus", ["Delay", "At Risk", "On Time", "Plan"],
+    [statusCounts.DELAY, statusCounts["AT RISK"], statusCounts["ON TIME"], statusCounts.PLAN],
+    ["#E74C3C", "#E67E22", "#27AE60", "#2E6DB4"]);
+  const pkgLabels = Object.keys(pkgCounts);
+  mkBar("chartPOPackage", pkgLabels, pkgLabels.map(k => pkgCounts[k]),
+    pkgLabels.map((_, i) => ["#2E6DB4", "#8E44AD", "#1ABC9C", "#27AE60", "#E67E22"][i % 5]));
+
+  /* ===== 2. CRITICAL ITEMS REPORT ===== */
+  const critDelay = critItems.filter(r => (r["Status"] || "").toUpperCase() === "DELAY").length;
+  const critAtRisk = critItems.filter(r => (r["Status"] || "").toUpperCase() === "AT RISK").length;
+  const delayDays = critItems.map(r => Number(r["Delay_Days"] || 0));
+  const maxDelay = delayDays.length ? Math.max(...delayDays) : 0;
+  const avgDelay = delayDays.length ? Math.round(delayDays.reduce((a, b) => a + b, 0) / delayDays.length) : 0;
+  $("#rCritDelay").textContent = critDelay;
+  $("#rCritAtRisk").textContent = critAtRisk;
+  $("#rCritMaxDelay").textContent = maxDelay;
+  $("#rCritAvgDelay").textContent = avgDelay;
+  const topCrit = [...critItems].sort((a, b) => Number(b["Delay_Days"] || 0) - Number(a["Delay_Days"] || 0)).slice(0, 6);
+  mkBar("chartCriticalItems", topCrit.map(r => r["Item_Description"] || "—"), topCrit.map(r => Number(r["Delay_Days"] || 0)),
+    topCrit.map(r => (r["Status"] || "").toUpperCase() === "DELAY" ? "#E74C3C" : "#E67E22"));
+
+  /* ===== 3. OVERDUE ITEMS REPORT ===== */
+  const overduePO = statusCounts.DELAY;
+  const onTimePO = statusCounts["ON TIME"];
+  const otdRate = (onTimePO + overduePO) ? ((onTimePO / (onTimePO + overduePO)) * 100).toFixed(1) : "0.0";
+  $("#rOverduePO").textContent = overduePO;
+  $("#rOnTimePO").textContent = onTimePO;
+  $("#rOTDRate").textContent = otdRate + "%";
+  $("#rPlanFuture").textContent = statusCounts.PLAN;
+  mkDonut("chartOTDDonut", ["On Time", "Overdue", "Plan"], [onTimePO, overduePO, statusCounts.PLAN], ["#27AE60", "#E74C3C", "#2E6DB4"]);
+  const vendorDelay = {};
+  poData.forEach(r => {
+    const st = (r["Status"] || "").toUpperCase();
+    if (st === "DELAY" || st === "AT RISK") {
+      const v = r["Vendor"] || "—";
+      vendorDelay[v] = (vendorDelay[v] || 0) + Number(r["Delay_Days"] || 0);
+    }
+  });
+  const vendorLabels = Object.keys(vendorDelay).sort((a, b) => vendorDelay[b] - vendorDelay[a]).slice(0, 6);
+  mkBar("chartDelayVendor", vendorLabels, vendorLabels.map(v => vendorDelay[v]), "#E74C3C");
+
+  /* ===== 4. OPEN ACTIONS REPORT ===== */
+  const actOpen = actData.filter(r => (r["Status"] || "").toUpperCase() === "OPEN").length;
+  const actPending = actData.filter(r => (r["Status"] || "").toUpperCase() === "PENDING").length;
+  const actClosed = actData.filter(r => (r["Status"] || "").toUpperCase() === "CLOSED").length;
+  $("#rActOpen").textContent = actOpen;
+  $("#rActPending").textContent = actPending;
+  $("#rActClosed").textContent = actClosed;
+  $("#rActTotal").textContent = actData.length;
+  mkBar("chartActionsStatus", ["Open", "Pending", "Closed"], [actOpen, actPending, actClosed], ["#E74C3C", "#8E44AD", "#27AE60"]);
+
+  /* ===== 5. UPCOMING FAT REPORT ===== */
+  const fatConfirmed = fatData.filter(r => (r["Status"] || "").toLowerCase() === "confirmed").length;
+  const fatTentative = fatData.filter(r => (r["Status"] || "").toLowerCase() === "tentative").length;
+  const fatPlan = fatData.filter(r => (r["Status"] || "").toLowerCase() === "plan").length;
+  const fatOngoing = fatData.filter(r => (r["Status"] || "").toLowerCase() === "ongoing").length;
+  $("#rFatConfirmed").textContent = fatConfirmed;
+  $("#rFatTentative").textContent = fatTentative;
+  $("#rFatPlan").textContent = fatPlan;
+  $("#rFatOngoing").textContent = fatOngoing;
+  mkDonut("chartFATStatus", ["Confirmed", "Tentative", "Plan"], [fatConfirmed, fatTentative, fatPlan], ["#27AE60", "#E67E22", "#2E6DB4"]);
+
+  const monthCounts = {};
+  fatData.forEach(r => {
+    const dt = r["FAT_Date"] ? new Date(r["FAT_Date"]) : null;
+    if (!dt || isNaN(dt)) return;
+    const key = dt.toLocaleDateString("en-US", { month: "short" });
+    monthCounts[key] = (monthCounts[key] || 0) + 1;
+  });
+  const monthOrder = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const monthLabels = Object.keys(monthCounts).sort((a, b) => monthOrder.indexOf(a) - monthOrder.indexOf(b));
+  mkBar("chartFATTimeline", monthLabels, monthLabels.map(m => monthCounts[m]), "#1ABC9C");
+
+  const sortedFat = [...fatData].sort((a, b) => new Date(a["FAT_Date"] || 0) - new Date(b["FAT_Date"] || 0));
+  $("#reportFatTable").innerHTML = sortedFat.length ? sortedFat.map(r => `
+    <tr><td>${r["Item"] || ""}</td><td>${r["Vendor"] || ""}</td><td>${r["FAT_Date"] || ""}</td>
+    <td>${r["Location"] || ""}</td><td>${statusBadge(r["Status"])}</td><td>${r["Inspector"] || ""}</td></tr>`).join("")
+    : "<tr><td colspan='6' style='text-align:center;padding:16px;color:#999'>Tidak ada data</td></tr>";
+
+  /* ===== 6. S-CURVE PROGRESS REPORT ===== */
+  const sCurve = d.sCurve || [];
+  const lastActual = [...sCurve].reverse().find(r => r["Actual_Pct"] !== "" && r["Actual_Pct"] != null);
+  const lastPlanned = [...sCurve].reverse().find(r => r["Planned_Pct"] !== "" && r["Planned_Pct"] != null);
+  const finalPlanned = sCurve.length ? sCurve[sCurve.length - 1] : null;
+  const actualMonth = lastActual ? lastActual["Month"] : "";
+  const plannedMonth = lastPlanned ? lastPlanned["Month"] : "";
+  const variance = d.progress ? d.progress.variance : 0;
+  $("#rSCurveActual").textContent = (d.progress ? d.progress.actual : 0) + "%";
+  $("#rSCurveActualLbl").textContent = "Actual" + (actualMonth ? " (" + actualMonth + ")" : "");
+  $("#rSCurvePlanned").textContent = (lastPlanned ? Number(lastPlanned["Planned_Pct"]) : 0) + "%";
+  $("#rSCurvePlannedLbl").textContent = "Planned" + (plannedMonth ? " (" + plannedMonth + ")" : "");
+  $("#rSCurveVariance").textContent = (variance > 0 ? "+" : "") + variance + "%";
+  $("#rSCurveVariance").style.color = variance >= 0 ? "#27AE60" : "#E74C3C";
+  $("#rSCurveTarget").textContent = (finalPlanned ? Number(finalPlanned["Planned_Pct"] || 100) : 100) + "%";
+  $("#rSCurveTargetLbl").textContent = "Target" + (finalPlanned ? " (" + finalPlanned["Month"] + ")" : "");
+
+  $("#rProjName").textContent = $("#sideProjectName") ? $("#sideProjectName").textContent : "—";
+  $("#rProjClient").textContent = $("#sideClient") ? $("#sideClient").textContent : "—";
+  $("#rProjLocation").textContent = $("#sideLocation") ? $("#sideLocation").textContent : "—";
+  $("#rProjDates").textContent = (($("#sideStart") ? $("#sideStart").textContent : "") + " – " + ($("#sideTarget") ? $("#sideTarget").textContent : ""));
+
+  const scLabels = sCurve.map(r => r["Month"]);
+  const scPlanned = sCurve.map(r => r["Planned_Pct"] !== "" ? Number(r["Planned_Pct"]) : null);
+  const scActual = sCurve.map(r => r["Actual_Pct"] !== "" ? Number(r["Actual_Pct"]) : null);
+  const scEl = document.getElementById("chartSCurveReport");
+  if (scEl) {
+    const c = new Chart(scEl.getContext("2d"), {
+      type: "line",
+      data: { labels: scLabels, datasets: [
+        { label: "Planned", data: scPlanned, borderColor: "#2E6DB4", borderDash: [5, 4], tension: .4, pointRadius: 3, fill: false },
+        { label: "Actual", data: scActual, borderColor: "#27AE60", tension: .4, pointRadius: 4, fill: false }
+      ] },
+      options: {
+        responsive: true,
+        plugins: { legend: { position: "bottom", labels: { font: { size: 11 }, boxWidth: 20 } } },
+        scales: { y: { min: 0, max: 100, ticks: { callback: v => v + "%" } } }
+      }
+    });
+    reportCharts.push(c);
+  }
+}
+
+function printReport() { window.print(); }
+function exportReportPDF() { window.print(); }
+function exportReportCSV(kind) {
+  if (!reportPOData.length) { showToast("Belum ada data PO untuk diexport", true); return; }
+  const cols = ["PO_ID","PO_Type","Package","Item_Description","Vendor","PO_Date","RDD","FDD","Status","Delay_Days","Value_USD"];
+  const rows = [cols.join(",")].concat(reportPOData.map(r => cols.map(c => `"${String(r[c] || "").replace(/"/g,'""')}"`).join(",")));
+  const blob = new Blob([rows.join("\n")], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "expediting_report." + (kind === "excel" ? "xls" : "csv");
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function $(sel) { return document.querySelector(sel); }
+
+function statusBadge(s) {
+  const map = {
+    "DELAY":"delay","AT RISK":"atrisk","ON TIME":"ontime","PLAN":"plan","Plan":"plan","Actual":"ontime",
+    "Confirmed":"confirmed","Tentative":"tentative","Scheduled":"scheduled","On the way":"ontheway","Booking":"booking",
+    "OPEN":"open","CLOSED":"closed","PENDING":"pending","COMPLETE":"complete","IN PROGRESS":"inprogress",
+    "CONFIRMED":"confirmed","Ongoing":"ongoing","Admin":"complete","User":"plan","Active":"ontime","Inactive":"delay"
+  };
+  const cls = map[s] || "plan";
+  return `<span class="badge badge-${cls}">${s||"—"}</span>`;
+}
+
+function riskBadge(r) {
+  const lvl = (r || "").toLowerCase();
+  if (lvl === "high")   return `<span class="risk-high">High</span>`;
+  if (lvl === "medium") return `<span class="risk-medium">Medium</span>`;
+  if (lvl === "low")    return `<span class="risk-low">Low</span>`;
+  return r || "—";
+}
+
+function delayClass(d) {
+  const n = Number(d || 0);
+  if (n > 5)  return "delay-red";
+  if (n > 0)  return "delay-orange";
+  return "delay-green";
+}
+
+function showLoading(show) { document.getElementById("loadingOverlay").classList.toggle("show", !!show); }
+
+function showToast(msg, isErr) {
+  const t = document.getElementById("toast");
+  t.textContent = msg;
+  t.className = "toast" + (isErr ? " error" : "") + " show";
+  setTimeout(() => t.className = "toast", 3000);
+}
+</script>
+</body>
+</html>
